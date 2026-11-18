@@ -21,7 +21,37 @@
 
 ## 安装
 
-前置：DSH `>=0.2.2-rc.1 <0.3.0-0`、Node `>=24.9.0`。
+### 前置依赖
+
+| 依赖 | 版本 | 用途 | 缺失时 |
+| --- | --- | --- | --- |
+| DSH | `>=0.2.2-rc.1 <0.3.0-0` | 宿主运行时 | 无法安装 |
+| Node | `>=24.9.0` | 插件运行时 | 无法加载 |
+| **`ffmpeg` / `ffprobe`** | 建议 6.0+ | B站 DASH 音视频合并、yt-dlp 合流 | B站自动回退 `durl` 单文件（通常只有 480P）；YouTube 可能只拿到单轨（无音轨或无声） |
+| **`yt-dlp`** | 建议 2025 年及以后版本 | YouTube 与通用站点（TikTok / Instagram / AcFun / Reddit 等白名单域名）的解析与下载 | 这两个平台返回 `tool-missing`；B站 / 抖音 / 小红书 / 微博 / X 不受影响 |
+
+安装：
+
+```bash
+# Debian / Ubuntu
+sudo apt update && sudo apt install -y ffmpeg curl
+sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+  -o /usr/local/bin/yt-dlp && sudo chmod +x /usr/local/bin/yt-dlp
+
+# macOS
+brew install ffmpeg yt-dlp
+```
+
+校验：
+
+```bash
+ffmpeg -version | head -1
+ffprobe -version | head -1
+yt-dlp --version
+```
+
+三个命令都在 PATH 里即可；装在别处时用配置项 `ffmpegPath` / `ytdlpPath` 指定名称或绝对路径。
+插件只做版本探测与明确报错，**不会自动安装系统依赖**。
 
 **方式一：npm（发布后）**
 
@@ -177,12 +207,12 @@ IM 渠道的文件投递**必须与 `@xmanrui/dsh-im` 插件配合使用**。未
 
 ## 外部依赖
 
-| 工具 | 用途 | 缺失时 |
-| --- | --- | --- |
-| `ffmpeg` / `ffprobe` | B站 DASH 合并、yt-dlp 合流 | B站自动回退 `durl` 单文件；YouTube 可能只能拿到单轨 |
-| `yt-dlp` | YouTube / 通用站点 | 这两个平台返回 `tool-missing`，其余平台不受影响 |
+安装前置见「[安装 → 前置依赖](#前置依赖)」。这里只说明运行时行为：
 
-插件只做版本探测与明确报错，**不会自动安装系统依赖**。路径可通过 `ffmpegPath` / `ytdlpPath` 指定。
+- 插件**不自动安装**任何系统依赖，缺失时给出明确的 `tool-missing` 错误，而不是静默降级；
+- `ffmpeg` 缺失：B站回退到 `durl` 单文件（音视频合一，通常只有 480P）；YouTube / 通用站点可能只拿到单轨；
+- `yt-dlp` 缺失：YouTube 与通用站点的解析和下载都不可用，其余平台正常；
+- 路径通过配置项 `ffmpegPath` / `ytdlpPath` 覆盖（可填命令名或绝对路径）。
 
 ## Docker 部署
 
