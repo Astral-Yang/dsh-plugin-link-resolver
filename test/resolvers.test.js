@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { __test__ as biliTest } from '../lib/resolvers/bilibili.js';
+import { detectPlatform } from '../lib/core/registry.js';
 import { DEFAULT_GENERIC_DOMAINS, hostAllowed } from '../lib/resolvers/generic.js';
 import { __test__ as ytTest } from '../lib/resolvers/youtube.js';
 import { extractDouyinRef, mapDouyinItem, parseRouterData } from '../lib/resolvers/douyin.js';
@@ -18,6 +19,13 @@ import { __test__ as weiboTest } from '../lib/resolvers/weibo.js';
 const { cleanWeiboText, extractImages, extractVideo, parseSetCookies } = weiboTest;
 import { ciImageUrl, extractFileId, extractXhsNoteId, extractXhsRef, parseHtmlMedia, parseInitialState, redirectTargetOf } from '../lib/resolvers/xiaohongshu.js';
 import { __test__ as xhsTest } from '../lib/resolvers/xiaohongshu.js';
+
+test('bilibili: 短链识别与长链引用解析', () => {
+  // 短链由 registry 命中平台，但短码本身不含 BV/av —— 需要 resolveBiliRef 跟随跳转。
+  assert.equal(detectPlatform('https://b23.tv/abc123')?.platform, 'bilibili');
+  assert.equal(biliTest.extractBiliRef('https://b23.tv/abc123'), undefined);
+  assert.equal(biliTest.extractBiliRef('https://bili2233.cn/xyz'), undefined);
+});
 
 test('bilibili: 链接引用与 DASH 媒体选择', () => {
   const ref = biliTest.extractBiliRef('https://www.bilibili.com/video/BV1xx411c7mD?p=2');

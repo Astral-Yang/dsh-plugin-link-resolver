@@ -254,6 +254,7 @@ dsh plugin --profile <profile> remove dsh-plugin-link-resolver
 
 ## 常见问题
 
+- **B站短链（`b23.tv` / `bili2233.cn`）**：支持，会先跟随一次跳转再解析。
 - **B站只有 480P**：未登录限制；在设置里填 `biliCookies`（浏览器导出的 `SESSDATA=...` 等）可解锁 1080P60 / 4K。
 - **小红书返回登录墙**：配置 `xhsCookies`（浏览器登录态）。
 - **抖音解析失败**：签名接口依赖游客身份，频繁请求可能触发风控；稍后重试。

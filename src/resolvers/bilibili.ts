@@ -89,6 +89,46 @@ async function getWbiKeys(ctx: ResolverContext, cookie?: string): Promise<{ imgK
 }
 
 /**
+ * 解析视频引用，支持 b23.tv / bili2233.cn 短链（跟随一次跳转后再取 BV/av）。
+ *
+ * @param url - 原始链接。
+ * @param ctx - 运行参数。
+ * @param cookie - 可选 Cookie。
+ * @returns 视频引用。
+ */
+export async function resolveBiliRef(
+  url: string,
+  ctx: ResolverContext,
+  cookie?: string,
+): Promise<BiliRef> {
+  const direct = extractBiliRef(url);
+  if (direct) return direct;
+
+  let finalUrl: string;
+  try {
+    const response = await requestText(url, {
+      timeoutMs: ctx.timeoutMs,
+      retries: ctx.retries,
+      ...(ctx.signal ? { signal: ctx.signal } : {}),
+      headers: biliHeaders(cookie),
+    });
+    finalUrl = response.url;
+  } catch (error) {
+    throw new ResolveError('network', `B站短链跳转失败：${error instanceof Error ? error.message : String(error)}`, {
+      platform: 'bilibili',
+      retryable: true,
+      cause: error,
+    });
+  }
+
+  const followed = extractBiliRef(finalUrl);
+  if (!followed) {
+    throw new ResolveError('unsupported-url', `B站短链未跳转到视频页：${finalUrl}`, { platform: 'bilibili' });
+  }
+  return followed;
+}
+
+/**
  * 获取视频信息。
  *
  * @param ref - 视频引用。
@@ -222,10 +262,8 @@ export function buildDashMedia(play: Record<string, unknown>): MediaItem[] {
  * @returns 统一结果。
  */
 export async function resolveBilibili(url: string, ctx: ResolverContext & { biliCookie?: string }): Promise<ResolvedLink> {
-  const ref = extractBiliRef(url);
-  if (!ref) throw new ResolveError('unsupported-url', `无法从链接提取 BV/av 号：${url}`, { platform: 'bilibili' });
-
   const cookie = ctx.biliCookie;
+  const ref = await resolveBiliRef(url, ctx, cookie);
   const info = await fetchVideoInfo(ref, ctx, cookie);
   const bvid = pickString(info['bvid']) ?? ref.bvid ?? '';
   const pages = Array.isArray(info['pages']) ? info['pages'] : [];
@@ -269,7 +307,7 @@ export async function resolveBilibili(url: string, ctx: ResolverContext & { bili
 }
 
 /** 仅测试使用。 */
-export const __test__ = { buildDashMedia, extractBiliRef, QUALITY_LABELS, requestText };
+export const __test__ = { buildDashMedia, extractBiliRef, resolveBiliRef, QUALITY_LABELS, requestText };
 /**
  * 下载 B站视频（DASH 音视频分离 → ffmpeg 合并；无 ffmpeg 时回退 durl 单文件）。
  *
@@ -282,8 +320,7 @@ export async function downloadBilibili(
   options: { ctx: ResolverContext; maxHeight?: number; maxBytes?: number; timeoutMs: number; signal?: AbortSignal; outputDir: string; ffmpegPath?: string; fileName?: string; cookie?: string },
 ): Promise<import('../core/result.js').LocalFile> {
   const { ctx, maxHeight = 1080, maxBytes, timeoutMs, signal, outputDir, ffmpegPath = 'ffmpeg', cookie } = options;
-  const ref = extractBiliRef(url);
-  if (!ref) throw new ResolveError('unsupported-url', `无法从链接提取 BV/av 号：${url}`, { platform: 'bilibili' });
+  const ref = await resolveBiliRef(url, ctx, cookie);
 
   const info = await fetchVideoInfo(ref, ctx, cookie);
   const cid = pickCid(info, ref.page);

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0-rc.21 — B站短链
+
+### 修复
+
+- `b23.tv` / `bili2233.cn` 短链此前只能被识别为 B站平台、无法解析：`extractBiliRef` 只认 URL 里的 BV/av 号，而短码不含。
+- 新增 `resolveBiliRef()`：直接提取失败时**跟随一次跳转**（`requestText` 手动重定向，最多 5 跳），再从最终 URL 提取 BV/av；解析与下载两侧统一使用。
+- 失败语义：跳转失败返回 `network`（可重试）；跳转后仍无 BV/av 返回 `unsupported-url`。
+
+### 验证
+
+- 单测 49/49（新增短链识别与短码不含 BV 的断言）。
+- headless 真链：`https://b23.tv/BV1GJ411x7h7` 解析成功并交付。
+
 ## 1.0.0-rc.20 — B站 Cookie、下载保留策略、工作区过滤
 
 ### 新增

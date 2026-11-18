@@ -67,7 +67,10 @@ export function describeResult(result: ResolvedLink): string {
   const videos = result.media.filter((item) => item.kind === 'video' || item.kind === 'livephoto-video').length;
   const images = result.media.filter((item) => item.kind === 'image').length;
   const media: string[] = [];
-  if (videos > 0) media.push(`${videos} 个视频`);
+  if (videos > 0) {
+    // B站的 media 是画质候选列表，不是多个视频文件。
+    media.push(result.platform === 'bilibili' && videos > 1 ? `1 个视频（${videos} 个画质）` : `${videos} 个视频`);
+  }
   if (images > 0) media.push(`${images} 张图片`);
   parts.push(media.length > 0 ? media.join(' / ') : '无媒体（纯文本）');
   return parts.join(' · ');
