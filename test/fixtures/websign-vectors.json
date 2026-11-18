@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "query": "device_platform=webapp&aid=6383&aweme_id=7708744445503573289",
+      "uifid": "uifid-abc",
+      "timestamp": 1794926000,
+      "signedQuery": "device_platform=webapp&aid=6383&aweme_id=7708744445503573289&uifid=uifid-abc&timestamp=1794926000&x-secsdk-web-signature=d1784867fbe36c84a13b4f32bd5dbc25",
+      "signature": "d1784867fbe36c84a13b4f32bd5dbc25"
+    },
+    {
+      "query": "a=1&b=hello%20world&c=%E4%B8%AD%E6%96%87",
+      "uifid": "UIFID_TEMP_123",
+      "timestamp": 1794926123,
+      "signedQuery": "a=1&b=hello%20world&c=%E4%B8%AD%E6%96%87&uifid=UIFID_TEMP_123&timestamp=1794926123&x-secsdk-web-signature=a0a5f5519f26befa3d512fd3057060ee",
+      "signature": "a0a5f5519f26befa3d512fd3057060ee"
+    }
+  ]
+}

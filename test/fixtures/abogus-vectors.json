@@ -1,0 +1,35 @@
+{
+  "fixedPrefix": "\u0011\"3DUfwª»Ì",
+  "cases": [
+    {
+      "name": "get-basic",
+      "params": "device_platform=webapp&aid=6383&channel=channel_pc_web&aweme_id=7708744445503573289",
+      "body": "",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+      "fp": "1920|1080|1950|1170|0|30|0|0|1920|1080|1920|1080|1920|1080|24|24|Win32",
+      "now": 1794926000000,
+      "a_bogus": "gVmrvhXoUbx4OPF85I9LfY3q66Z3YQxA0SVkMD2f9dfPj639HMOD9exolP4vdf8jF4/JIeyjy4hbO3xprQAjM36UHWwqUdQ2m6fkKl5Q5I0j53iruyRkrzDF-vG1SaBBRk-lrOX0w7lHFb8pAnAn-h2UbfebYrtswnuYt9/bIE==",
+      "params_with": "device_platform=webapp&aid=6383&channel=channel_pc_web&aweme_id=7708744445503573289&a_bogus=gVmrvhXoUbx4OPF85I9LfY3q66Z3YQxA0SVkMD2f9dfPj639HMOD9exolP4vdf8jF4/JIeyjy4hbO3xprQAjM36UHWwqUdQ2m6fkKl5Q5I0j53iruyRkrzDF-vG1SaBBRk-lrOX0w7lHFb8pAnAn-h2UbfebYrtswnuYt9/bIE=="
+    },
+    {
+      "name": "get-second",
+      "params": "device_platform=webapp&aid=6383&aweme_id=7345492945006595379&msToken=abc",
+      "body": "",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+      "fp": "1280|720|1312|800|0|0|0|0|1280|720|1366|768|1280|720|24|24|Win32",
+      "now": 1794926123456,
+      "a_bogus": "gVmrvhXoUbx4OPF85I9LfY3q6-N3YMQW0SVkMD2fUx3May39HMPD9exolPvvsy8jF4/JIeujy4hbYNQprQ2n01wfHShE/25ZmDSkKl5Q5xSSs1XJtyUgntsNmktWtlx2-iB1rOXMw7lHKREk09oHmhK4bIOwu3GMUj==",
+      "params_with": "device_platform=webapp&aid=6383&aweme_id=7345492945006595379&msToken=abc&a_bogus=gVmrvhXoUbx4OPF85I9LfY3q6-N3YMQW0SVkMD2fUx3May39HMPD9exolPvvsy8jF4/JIeujy4hbYNQprQ2n01wfHShE/25ZmDSkKl5Q5xSSs1XJtyUgntsNmktWtlx2-iB1rOXMw7lHKREk09oHmhK4bIOwu3GMUj=="
+    },
+    {
+      "name": "post-body",
+      "params": "device_platform=webapp&aid=6383&aweme_id=7708744445503573289",
+      "body": "aweme_type=0&item_id=7708744445503573289&play_delta=1",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+      "fp": "1600|900|1632|990|0|30|0|0|1600|900|1920|1040|1600|900|24|24|Win32",
+      "now": 1794926999999,
+      "a_bogus": "gVmrvhXoUbx4OPF85I9LfY3q6IuIYsoM0SVkMD2fffECNy39HMOe9exolOUvvrjjF4/JIeLjy4hbTNOprQCj01wf9u0E/2A/mDSkKl12so0j53inC6WmE0wN-hsACFrQsv1liOfkqw2aFuRmA9Fe-wHvPjojx2f39gGm",
+      "params_with": "device_platform=webapp&aid=6383&aweme_id=7708744445503573289&a_bogus=gVmrvhXoUbx4OPF85I9LfY3q6IuIYsoM0SVkMD2fffECNy39HMOe9exolOUvvrjjF4/JIeLjy4hbTNOprQCj01wf9u0E/2A/mDSkKl12so0j53inC6WmE0wN-hsACFrQsv1liOfkqw2aFuRmA9Fe-wHvPjojx2f39gGm"
+    }
+  ]
+}

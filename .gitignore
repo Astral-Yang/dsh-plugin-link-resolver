@@ -1,0 +1,11 @@
+node_modules/
+lib/
+*.tgz
+.tmp-npm/
+.tmp-pnpm-store/
+.tmp-pnpm-cache/
+.tmp-*/
+.tmp-*
+.cache/
+coverage/
+.DS_Store

@@ -1,0 +1,20 @@
+# dsh-plugin-link-resolver —— bundle 层。
+#
+# 在 profile 的 `dsh.profile.bundles` 中登记本包后，这里会向组合树插入一个 loader 条目。
+# 未在此列出的字段一律走插件 Config Schema 的默认值；profile 自己的 cordis.patch.yml
+# 中同 id 的条目会整体替换这里的 config（不做深合并）。
+- insert:
+    - id: link-resolver
+      name: dsh-plugin-link-resolver
+      config:
+        enabled: true
+        downloadMedia: true
+        autoGuidance: true
+        # 通用站点默认关闭：需要显式把 "generic" 加入列表才会启用。
+        enabledPlatforms:
+          - bilibili
+          - douyin
+          - xiaohongshu
+          - weibo
+          - twitter
+          - youtube
