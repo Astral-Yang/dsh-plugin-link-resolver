@@ -27,6 +27,13 @@ test('bilibili: 短链识别与长链引用解析', () => {
   assert.equal(biliTest.extractBiliRef('https://bili2233.cn/xyz'), undefined);
 });
 
+test('bilibili: 标题取值（单 P 忽略无意义的 part，多 P 附带分 P 名）', () => {
+  const info = { title: 'Zen6震撼登场！' };
+  assert.equal(biliTest.pickVideoTitle(info, { part: '1794985173419' }, 1, 1), 'Zen6震撼登场！');
+  assert.equal(biliTest.pickVideoTitle(info, { part: '第二期' }, 2, 3), 'Zen6震撼登场！（P2：第二期）');
+  assert.equal(biliTest.pickVideoTitle({}, { part: '1794985173419' }, 1, 1), '1794985173419');
+});
+
 test('bilibili: 链接引用与 DASH 媒体选择', () => {
   const ref = biliTest.extractBiliRef('https://www.bilibili.com/video/BV1xx411c7mD?p=2');
   assert.equal(ref.bvid, 'BV1xx411c7mD');

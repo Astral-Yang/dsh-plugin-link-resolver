@@ -129,6 +129,30 @@ export async function resolveBiliRef(
 }
 
 /**
+ * 选择展示标题：视频标题优先；多 P 时附带分 P 名。
+ *
+ * 单 P 视频的 `pages[0].part` 常被平台写成时间戳等无意义值，不能当标题。
+ *
+ * @param info - view 接口 data。
+ * @param pageInfo - 当前分 P 信息。
+ * @param pageIndex - 分 P 序号（从 1 开始）。
+ * @param pageCount - 分 P 总数。
+ * @returns 展示标题。
+ */
+export function pickVideoTitle(
+  info: Record<string, unknown>,
+  pageInfo: Record<string, unknown>,
+  pageIndex: number,
+  pageCount: number,
+): string {
+  const videoTitle = pickString(info['title']);
+  const pageTitle = pickString(pageInfo['part']);
+  return pageCount > 1 && pageTitle
+    ? `${videoTitle ?? '（无标题）'}（P${pageIndex}：${pageTitle}）`
+    : videoTitle ?? pageTitle ?? '（无标题）';
+}
+
+/**
  * 获取视频信息。
  *
  * @param ref - 视频引用。
@@ -281,7 +305,7 @@ export async function resolveBilibili(url: string, ctx: ResolverContext & { bili
   const warnings: string[] = [];
   if (maxQn !== undefined && maxQn <= 32) warnings.push('未登录仅返回 480P 及以下画质');
 
-  const title = pickString(pageInfo['part'], info['title']) ?? '（无标题）';
+  const title = pickVideoTitle(info, pageInfo, pageIndex, pages.length);
   return buildResult({
     platform: 'bilibili',
     url: `https://www.bilibili.com/video/${bvid}${pageIndex > 1 ? `?p=${pageIndex}` : ''}`,
@@ -307,7 +331,7 @@ export async function resolveBilibili(url: string, ctx: ResolverContext & { bili
 }
 
 /** 仅测试使用。 */
-export const __test__ = { buildDashMedia, extractBiliRef, resolveBiliRef, QUALITY_LABELS, requestText };
+export const __test__ = { buildDashMedia, extractBiliRef, resolveBiliRef, pickVideoTitle, QUALITY_LABELS, requestText };
 /**
  * 下载 B站视频（DASH 音视频分离 → ffmpeg 合并；无 ffmpeg 时回退 durl 单文件）。
  *
