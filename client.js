@@ -14,6 +14,18 @@ window.__ModuleLoader__.load({
       { key: 'downloadMedia', type: 'boolean', label: '下载媒体', hint: '开：解析后下载并在对话/IM 内自动交付；关：只解析元数据，不下载、不交付' },
       { key: 'toolEnabled', type: 'boolean', label: '注册 resolve_link 工具', hint: '默认关闭：链接由插件自动处理，模型无需重复解析；需要手动解析时才打开' },
       { key: 'autoGuidance', type: 'boolean', label: '系统提示引导', hint: '向系统提示注入「上下文已有结果时直接采用，不要重复解析」' },
+      { key: 'retainDays', type: 'number', label: '下载保留天数 (1–30)', hint: '超过该天数的内容目录会被清理，并同步失效对应缓存' },
+      {
+        key: 'workspaceFilterMode',
+        type: 'select',
+        label: '工作区过滤',
+        hint: 'allow：只处理列表内工作区；deny：跳过列表内工作区',
+        options: [
+          { value: 'deny', label: '跳过列表内（黑名单）' },
+          { value: 'allow', label: '只处理列表内（白名单）' },
+        ],
+      },
+      { key: 'workspaceList', type: 'list', label: '工作区路径', hint: '逗号分隔，按前缀匹配，例如 /home/me/work,/data/projects' },
       { key: 'downloadDir', type: 'string', label: '下载目录', hint: '相对会话工作区；绝对路径可直接使用' },
       { key: 'videoMaxHeight', type: 'number', label: '视频最大高度 (px)' },
       { key: 'maxMedia', type: 'number', label: '最大媒体数量' },
@@ -24,6 +36,7 @@ window.__ModuleLoader__.load({
       { key: 'ffmpegPath', type: 'string', label: 'ffmpeg 路径' },
       { key: 'ytdlpPath', type: 'string', label: 'yt-dlp 路径' },
       { key: 'enabledPlatforms', type: 'list', label: '启用平台', hint: '逗号分隔：bilibili,douyin,xiaohongshu,weibo,twitter,youtube' },
+      { key: 'biliCookies', type: 'string', label: 'B站 Cookie（可选）', hint: '形如 SESSDATA=...；留空为未登录，画质上限 480P' },
       { key: 'weiboCookies', type: 'string', label: '微博 Cookie（可选）' },
       { key: 'xhsCookies', type: 'string', label: '小红书 Cookie（可选）' },
     ];

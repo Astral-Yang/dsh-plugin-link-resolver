@@ -22,7 +22,8 @@ import type { SessionCache } from '../core/cache.js';
 import { extractLinks } from '../core/url.js';
 import type { LinkResolverConfig } from './config.js';
 import { failureText, notice, successText } from './notice.js';
-import { deliverFiles, formatSummary, processLink } from './pipeline.js';
+import { deliverFiles, downloadMedia, formatSummary, processLink } from './pipeline.js';
+import { maybeCleanup, workspaceAllowed } from './retention.js';
 
 /** dsh-im 随每个入站 IM 消息注入的通知 source kind（旧形态：独立消息）。 */
 const IM_SOURCE_KIND = 'plugin:dsh-im';
@@ -150,8 +151,14 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
     const sessionId = agent.session.id;
     const workspace = agent.session.header?.cwd ?? process.cwd();
     const origin = turnOriginOf(batch, ctx, sessionId);
-    const label = PLATFORM_BY_ID[detectPlatform(url)!.platform].label;
+    if (!workspaceAllowed(config, workspace)) {
+      ctx.logger.info(`link-resolver: 工作区被过滤，跳过 ${workspace}`);
+      return next();
+    }
     const exec = { agent, signal, origin };
+    // 保留策略：按工作区节流清理过期内容目录，并让缓存把已删文件判为不可复用。
+    await maybeCleanup(ctx, config, workspace, cache);
+    const label = PLATFORM_BY_ID[detectPlatform(url)!.platform].label;
 
     // 必须先走完 pre-step 链条再追加自己的 notice：直接 return 会短路后续监听器。
     // dsh-im 的全局监听器就在下游，它负责把消息里的 <dsh_im_source> 等内联块拆成独立消息。
@@ -172,6 +179,24 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         const refs = cached.downloads.map((file) => relative(workspace, file.path));
         const body = successText({ result: cached, delivery, origin, fileCount: cached.downloads.length, fileRefs: refs, reused: true, skipped });
         return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
+      }
+
+      // 元数据还在但文件被保留策略清理：只补下载，不重新解析。
+      if (cached && config.downloadMedia) {
+        ctx.logger.info(`link-resolver: 缓存命中但文件已清理，补下载 ${url}`);
+        try {
+          const refilled = await downloadMedia(cached, config, exec);
+          if (refilled.length > 0) {
+            const result = { ...cached, downloads: refilled };
+            cache.set(sessionId, url, result);
+            const delivery = await deliverFiles(ctx, exec, refilled, formatSummary(result, refilled));
+            const refs = refilled.map((file) => relative(workspace, file.path));
+            const body = successText({ result, delivery, origin, fileCount: refilled.length, fileRefs: refs, skipped });
+            return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
+          }
+        } catch (error) {
+          ctx.logger.warn(`link-resolver: 补下载失败，改为完整重解析 ${url}：${error instanceof Error ? error.message : String(error)}`);
+        }
       }
 
       const outcome = await processLink(ctx, url, config, exec, { deliver: false });

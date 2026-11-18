@@ -314,6 +314,7 @@ export function createResolveLinkTool(getConfig: () => LinkResolverConfig, cache
           ...(exec.signal ? { signal: exec.signal } : {}),
           ...(config.weiboCookies ? { weiboCookie: config.weiboCookies } : {}),
           ...(config.xhsCookies ? { xhsCookie: config.xhsCookies } : {}),
+          ...(config.biliCookies ? { biliCookie: config.biliCookies } : {}),
           xhsPreferCiPng: config.xhsPreferCiPng,
           ytdlpPath: config.ytdlpPath,
           genericDomains: config.genericAllowedDomains,

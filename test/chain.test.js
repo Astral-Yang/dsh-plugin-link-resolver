@@ -89,7 +89,7 @@ test('chain：命中会话缓存 → 不重新解析、直接重新交付', asyn
   const { ctx, firePreStep, executed } = fakeCtx();
   const cache = new SessionCache(3600_000);
   cache.set('s1', 'https://x.com/a/status/20', sampleResult(file));
-  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['twitter'] }), cache);
+  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['twitter'], downloadMedia: true, retainDays: 7, workspaceList: [], workspaceFilterMode: 'deny' }), cache);
 
   const calls = { next: 0 };
   const downstream = [{ role: 'user', content: [{ type: 'text', text: '下游注入的上下文' }], source: { kind: 'runtime-context' } }];
@@ -110,7 +110,7 @@ test('chain：命中会话缓存 → 不重新解析、直接重新交付', asyn
 
 test('chain：消息里没有受支持链接时不接管本轮', async () => {
   const { ctx, firePreStep, executed } = fakeCtx();
-  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['twitter'] }), new SessionCache(1000));
+  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['twitter'], downloadMedia: true, retainDays: 7, workspaceList: [], workspaceFilterMode: 'deny' }), new SessionCache(1000));
 
   const decision = await firePreStep(payloadFor('今天没有链接', '/tmp'));
   assert.equal(decision.kind, 'enter');
@@ -120,7 +120,7 @@ test('chain：消息里没有受支持链接时不接管本轮', async () => {
 
 test('chain：非首步与停用平台都不处理', async () => {
   const { ctx, firePreStep, executed } = fakeCtx();
-  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['xiaohongshu'] }), new SessionCache(1000));
+  installChain(ctx, () => ({ enabled: true, enabledPlatforms: ['xiaohongshu'], downloadMedia: true, retainDays: 7, workspaceList: [], workspaceFilterMode: 'deny' }), new SessionCache(1000));
 
   const secondStep = await firePreStep(payloadFor('https://x.com/a/status/20', '/tmp', 2));
   assert.equal(secondStep.messages.length, 0);

@@ -96,11 +96,15 @@ dsh plugin --profile <profile> add link:/absolute/path/to/dsh-link-resolver
 | `downloadDir` | `downloads` | 下载根目录（相对会话工作区；绝对路径直接使用） |
 | `maxDownloadMb` | `200` | 下载大小上限（0 不限） |
 | `maxDurationSec` | `300` | 媒体时长上限（0 不限） |
-| `cacheTtlHours` | `24` | 会话缓存有效期 |
+| `cacheTtlHours` | `24` | 会话缓存有效期（只影响元数据复用；文件按 `retainDays` 计） |
+| `retainDays` | `7` | 下载目录保留天数（1–30），过期内容目录会被清理并同步失效缓存 |
+| `workspaceFilterMode` | `deny` | 工作区过滤：`allow` 只处理列表内、`deny` 跳过列表内 |
+| `workspaceList` | `[]` | 工作区路径列表，按前缀匹配（留空 = 不限制） |
 | `videoMaxHeight` | `1080` | 视频下载最大高度（px） |
 | `ffmpegPath` | `ffmpeg` | ffmpeg 可执行文件（名称或绝对路径） |
 | `ytdlpPath` | `yt-dlp` | yt-dlp 可执行文件（名称或绝对路径） |
 | `genericAllowedDomains` | TikTok/Instagram/Facebook/AcFun/Reddit/Vimeo/Dailymotion/Twitch/Bilibili TV | 通用站点白名单 |
+| `biliCookies` | `''` | B站 Cookie（可选，`SESSDATA=...`；用于 1080P60 / 4K） |
 | `weiboCookies` | `''` | 微博 Cookie（可选；留空用访客态） |
 | `xhsCookies` | `''` | 小红书 Cookie（可选；登录墙时必需） |
 | `xhsPreferCiPng` | `true` | 小红书优先 ci 原图 |
@@ -181,6 +185,14 @@ downloads/
 
 详细规则见 [`docs/download-layout.md`](docs/download-layout.md)。
 
+### 保留策略与缓存
+
+- `retainDays`（1–30，默认 7）控制媒体在磁盘上的存活时间：按**内容目录**的 mtime 判定，过期即整目录删除；
+- 清理按工作区节流，一小时最多一次，只在处理链接时顺带执行，不需要额外定时器；
+- 清理后**同步失效**引用这些路径的会话缓存，避免缓存把已删目录当成“仍可复用”；
+- 若缓存里的元数据还在、但文件已被清理，链路会**只补下载、不重新解析**（少一次网络请求）；
+- `cacheTtlHours` 只控制元数据复用窗口。两者独立：`cacheTtlHours` 更短会多解析一次，更长也不会让文件活得更久。
+
 ## 媒体交付
 
 交付按**本轮来源**判定，不按「会话绑定在哪个渠道」判定——同一会话可以被 Web 与 IM 交替使用。
@@ -242,7 +254,7 @@ dsh plugin --profile <profile> remove dsh-plugin-link-resolver
 
 ## 常见问题
 
-- **B站只有 480P**：未登录限制；配置 `biliCookies`（后续版本支持）可提升。
+- **B站只有 480P**：未登录限制；在设置里填 `biliCookies`（浏览器导出的 `SESSDATA=...` 等）可解锁 1080P60 / 4K。
 - **小红书返回登录墙**：配置 `xhsCookies`（浏览器登录态）。
 - **抖音解析失败**：签名接口依赖游客身份，频繁请求可能触发风控；稍后重试。
 - **YouTube 解析失败**：确认 `yt-dlp --version` 可用，且版本足够新（建议 2026 最新版）。

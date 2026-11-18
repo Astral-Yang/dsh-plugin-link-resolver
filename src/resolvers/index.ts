@@ -20,6 +20,8 @@ import { resolveYoutube } from './youtube.js';
 export interface ResolveOptions extends ResolverContext {
   /** 微博用户 Cookie（可选）。 */
   weiboCookie?: string;
+  /** B站 Cookie（可选，提升画质上限）。 */
+  biliCookie?: string;
   /** 小红书用户 Cookie（可选）。 */
   xhsCookie?: string;
   /** 小红书是否优先原图。 */

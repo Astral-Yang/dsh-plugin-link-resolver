@@ -92,6 +92,7 @@ export async function downloadMedia(
         outputDir: dir,
         ffmpegPath: config.ffmpegPath,
         fileName: 'video.mp4',
+        ...(config.biliCookies ? { cookie: config.biliCookies } : {}),
       }),
     ];
   } else if (result.platform === 'youtube' || result.platform === 'generic') {
@@ -387,6 +388,7 @@ export async function processLink(
       ...(exec.signal ? { signal: exec.signal } : {}),
       ...(config.weiboCookies ? { weiboCookie: config.weiboCookies } : {}),
       ...(config.xhsCookies ? { xhsCookie: config.xhsCookies } : {}),
+      ...(config.biliCookies ? { biliCookie: config.biliCookies } : {}),
       xhsPreferCiPng: config.xhsPreferCiPng,
       ytdlpPath: config.ytdlpPath,
       genericDomains: config.genericAllowedDomains,

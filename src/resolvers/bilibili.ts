@@ -17,6 +17,11 @@ const BILI_HEADERS: Record<string, string> = {
   Referer: 'https://www.bilibili.com/',
 };
 
+/** 组合请求头：默认头 + 可选登录 Cookie。 */
+function biliHeaders(cookie?: string): Record<string, string> {
+  return cookie ? { ...BILI_HEADERS, Cookie: cookie } : BILI_HEADERS;
+}
+
 /** qn → 画质标签。 */
 const QUALITY_LABELS: Record<number, string> = {
   127: '8K',
@@ -62,14 +67,14 @@ export function extractBiliRef(url: string): BiliRef | undefined {
 let wbiKeys: { imgKey: string; subKey: string; expiresAt: number } | undefined;
 
 /** 获取 WBI keys（未登录也能拿到）。 */
-async function getWbiKeys(ctx: ResolverContext): Promise<{ imgKey: string; subKey: string } | undefined> {
+async function getWbiKeys(ctx: ResolverContext, cookie?: string): Promise<{ imgKey: string; subKey: string } | undefined> {
   if (wbiKeys && wbiKeys.expiresAt > Date.now()) return wbiKeys;
   try {
     const payload = (await requestJson('https://api.bilibili.com/x/web-interface/nav', {
       timeoutMs: ctx.timeoutMs,
       retries: ctx.retries,
       ...(ctx.signal ? { signal: ctx.signal } : {}),
-      headers: BILI_HEADERS,
+      headers: biliHeaders(cookie),
     })) as Record<string, unknown>;
     const data = (payload['data'] ?? {}) as Record<string, unknown>;
     const wbi = (data['wbi_img'] ?? {}) as Record<string, unknown>;
@@ -90,11 +95,11 @@ async function getWbiKeys(ctx: ResolverContext): Promise<{ imgKey: string; subKe
  * @param ctx - 运行参数。
  * @returns `data` 对象。
  */
-export async function fetchVideoInfo(ref: BiliRef, ctx: ResolverContext): Promise<Record<string, unknown>> {
+export async function fetchVideoInfo(ref: BiliRef, ctx: ResolverContext, cookie?: string): Promise<Record<string, unknown>> {
   const base: Record<string, string> = {};
   if (ref.bvid) base['bvid'] = ref.bvid;
   else if (ref.avid !== undefined) base['aid'] = String(ref.avid);
-  const keys = await getWbiKeys(ctx);
+  const keys = await getWbiKeys(ctx, cookie);
 
   const tryRequest = async (url: string): Promise<Record<string, unknown> | undefined> => {
     try {
@@ -102,7 +107,7 @@ export async function fetchVideoInfo(ref: BiliRef, ctx: ResolverContext): Promis
         timeoutMs: ctx.timeoutMs,
         retries: ctx.retries,
         ...(ctx.signal ? { signal: ctx.signal } : {}),
-        headers: BILI_HEADERS,
+        headers: biliHeaders(cookie),
       })) as Record<string, unknown>;
       if (payload['code'] !== 0) return undefined;
       const data = payload['data'];
@@ -140,7 +145,7 @@ function pickCid(info: Record<string, unknown>, page: number): number | undefine
  * @param fnval - 流格式（4048 = DASH，1 = durl）。
  * @returns `data` 对象。
  */
-export async function fetchPlayInfo(ref: BiliRef, cid: number, ctx: ResolverContext, fnval = 4048): Promise<Record<string, unknown>> {
+export async function fetchPlayInfo(ref: BiliRef, cid: number, ctx: ResolverContext, fnval = 4048, cookie?: string): Promise<Record<string, unknown>> {
   const base: Record<string, string> = {
     cid: String(cid),
     qn: '120',
@@ -150,14 +155,14 @@ export async function fetchPlayInfo(ref: BiliRef, cid: number, ctx: ResolverCont
   };
   if (ref.bvid) base['bvid'] = ref.bvid;
   else if (ref.avid !== undefined) base['aid'] = String(ref.avid);
-  const keys = await getWbiKeys(ctx);
+  const keys = await getWbiKeys(ctx, cookie);
   const tryRequest = async (url: string): Promise<Record<string, unknown> | undefined> => {
     try {
       const payload = (await requestJson(url, {
         timeoutMs: ctx.timeoutMs,
         retries: ctx.retries,
         ...(ctx.signal ? { signal: ctx.signal } : {}),
-        headers: BILI_HEADERS,
+        headers: biliHeaders(cookie),
       })) as Record<string, unknown>;
       if (payload['code'] !== 0) return undefined;
       const data = payload['data'];
@@ -216,11 +221,12 @@ export function buildDashMedia(play: Record<string, unknown>): MediaItem[] {
  * @param ctx - 运行参数。
  * @returns 统一结果。
  */
-export async function resolveBilibili(url: string, ctx: ResolverContext): Promise<ResolvedLink> {
+export async function resolveBilibili(url: string, ctx: ResolverContext & { biliCookie?: string }): Promise<ResolvedLink> {
   const ref = extractBiliRef(url);
   if (!ref) throw new ResolveError('unsupported-url', `无法从链接提取 BV/av 号：${url}`, { platform: 'bilibili' });
 
-  const info = await fetchVideoInfo(ref, ctx);
+  const cookie = ctx.biliCookie;
+  const info = await fetchVideoInfo(ref, ctx, cookie);
   const bvid = pickString(info['bvid']) ?? ref.bvid ?? '';
   const pages = Array.isArray(info['pages']) ? info['pages'] : [];
   const pageIndex = Math.min(ref.page, Math.max(pages.length, 1));
@@ -228,7 +234,7 @@ export async function resolveBilibili(url: string, ctx: ResolverContext): Promis
   const cid = pickCid(info, pageIndex);
   if (!cid) throw new ResolveError('parse-failed', 'B站视频缺少 cid', { platform: 'bilibili' });
 
-  const play = await fetchPlayInfo(ref, cid, ctx, 4048);
+  const play = await fetchPlayInfo(ref, cid, ctx, 4048, cookie);
   const media = buildDashMedia(play);
   const owner = (info['owner'] ?? {}) as Record<string, unknown>;
   const stat = (info['stat'] ?? {}) as Record<string, unknown>;
@@ -273,13 +279,13 @@ export const __test__ = { buildDashMedia, extractBiliRef, QUALITY_LABELS, reques
  */
 export async function downloadBilibili(
   url: string,
-  options: { ctx: ResolverContext; maxHeight?: number; maxBytes?: number; timeoutMs: number; signal?: AbortSignal; outputDir: string; ffmpegPath?: string; fileName?: string },
+  options: { ctx: ResolverContext; maxHeight?: number; maxBytes?: number; timeoutMs: number; signal?: AbortSignal; outputDir: string; ffmpegPath?: string; fileName?: string; cookie?: string },
 ): Promise<import('../core/result.js').LocalFile> {
-  const { ctx, maxHeight = 1080, maxBytes, timeoutMs, signal, outputDir, ffmpegPath = 'ffmpeg' } = options;
+  const { ctx, maxHeight = 1080, maxBytes, timeoutMs, signal, outputDir, ffmpegPath = 'ffmpeg', cookie } = options;
   const ref = extractBiliRef(url);
   if (!ref) throw new ResolveError('unsupported-url', `无法从链接提取 BV/av 号：${url}`, { platform: 'bilibili' });
 
-  const info = await fetchVideoInfo(ref, ctx);
+  const info = await fetchVideoInfo(ref, ctx, cookie);
   const cid = pickCid(info, ref.page);
   if (!cid) throw new ResolveError('parse-failed', 'B站视频缺少 cid', { platform: 'bilibili' });
   const bvid = pickString(info['bvid']) ?? ref.bvid ?? 'video';
@@ -293,7 +299,7 @@ export async function downloadBilibili(
   const outputPath = join(outputDir, options.fileName ?? `${bvid}_${cid}_${Date.now()}.mp4`);
 
   if (await ffmpegAvailable(ffmpegPath)) {
-    const play = await fetchPlayInfo(ref, cid, ctx, 4048);
+    const play = await fetchPlayInfo(ref, cid, ctx, 4048, cookie);
     const media = buildDashMedia(play);
     const candidate = media.find((item) => (item.quality?.height ?? 0) <= maxHeight) ?? media[media.length - 1];
     if (!candidate) throw new ResolveError('parse-failed', 'B站未返回可用视频流', { platform: 'bilibili' });
@@ -316,9 +322,9 @@ export async function downloadBilibili(
     const videoPath = `${outputPath}.video.m4s`;
     const audioPath = `${outputPath}.audio.m4s`;
     try {
-      await downloadFile(candidate.url, videoPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: BILI_HEADERS });
+      await downloadFile(candidate.url, videoPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: biliHeaders(cookie) });
       if (audioUrl) {
-        await downloadFile(audioUrl, audioPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: BILI_HEADERS });
+        await downloadFile(audioUrl, audioPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: biliHeaders(cookie) });
         await mergeAv(videoPath, audioPath, outputPath, { executable: ffmpegPath, ...(signal ? { signal } : {}), timeoutMs });
       } else {
         const { rename } = await import('node:fs/promises');
@@ -329,12 +335,12 @@ export async function downloadBilibili(
       await rm(audioPath, { force: true }).catch(() => {});
     }
   } else {
-    const play = await fetchPlayInfo(ref, cid, ctx, 1);
+    const play = await fetchPlayInfo(ref, cid, ctx, 1, cookie);
     const list = Array.isArray(play['durl']) ? play['durl'] : [];
     const first = list[0];
     const directUrl = first !== null && typeof first === 'object' ? pickString((first as Record<string, unknown>)['url']) : undefined;
     if (!directUrl) throw new ResolveError('parse-failed', 'B站未返回可下载地址（缺少 ffmpeg 且无 durl 回退）', { platform: 'bilibili' });
-    await downloadFile(directUrl, outputPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: BILI_HEADERS });
+    await downloadFile(directUrl, outputPath, { timeoutMs, ...(maxBytes ? { maxBytes } : {}), ...(signal ? { signal } : {}), headers: biliHeaders(cookie) });
   }
 
   const { stat } = await import('node:fs/promises');

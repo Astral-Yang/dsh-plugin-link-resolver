@@ -62,6 +62,30 @@ export class SessionCache {
     bucket.set(key, { value, expiresAt: Date.now() + this.ttlMs });
   }
 
+  /**
+   * 删除所有引用了指定路径之下文件的缓存条目。
+   *
+   * 保留策略清理目录后调用：避免缓存把已被删除的目录当成"仍可复用"。
+   *
+   * @param prefix - 目录前缀（绝对路径）。
+   * @returns 失效的条目数。
+   */
+  dropUnder(prefix: string): number {
+    let dropped = 0;
+    const normalized = prefix.replace(/\/+$/, '');
+    for (const [sessionId, bucket] of this.sessions) {
+      for (const [key, entry] of bucket) {
+        const files = entry.value.downloads ?? [];
+        if (files.some((file) => file.path === normalized || file.path.startsWith(`${normalized}/`))) {
+          bucket.delete(key);
+          dropped += 1;
+        }
+      }
+      if (bucket.size === 0) this.sessions.delete(sessionId);
+    }
+    return dropped;
+  }
+
   /** 清空全部缓存（插件卸载时调用）。 */
   clear(): void {
     this.sessions.clear();

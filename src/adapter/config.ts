@@ -30,8 +30,15 @@ export interface LinkResolverConfig {
   maxDownloadMb: number;
   maxDurationSec: number;
   cacheTtlHours: number;
+  /** 下载目录保留天数（1–30）。 */
+  retainDays: number;
+  /** 工作区过滤模式：allow 只处理列表内；deny 跳过列表内。 */
+  workspaceFilterMode: 'allow' | 'deny';
+  /** 工作区路径列表（前缀匹配）。 */
+  workspaceList: string[];
   weiboCookies: string;
   xhsCookies: string;
+  biliCookies: string;
   videoMaxHeight: number;
   ffmpegPath: string;
   ytdlpPath: string;
@@ -55,8 +62,12 @@ export const DEFAULTS: LinkResolverConfig = {
   maxDownloadMb: 200,
   maxDurationSec: 300,
   cacheTtlHours: 24,
+  retainDays: 7,
+  workspaceFilterMode: 'deny',
+  workspaceList: [],
   weiboCookies: '',
   xhsCookies: '',
+  biliCookies: '',
   videoMaxHeight: 1080,
   ffmpegPath: 'ffmpeg',
   ytdlpPath: 'yt-dlp',
@@ -94,8 +105,12 @@ export const Config = z.object({
   downloadDir: z.string().default('downloads').description('下载根目录（相对会话工作区）').volatile(),
   maxDownloadMb: z.number().min(0).max(2000).default(200).description('下载文件大小上限（MB，0 为不限）').volatile(),
   maxDurationSec: z.number().min(0).max(86400).default(300).description('最大媒体时长（秒，0 为不限）').volatile(),
-  cacheTtlHours: z.number().min(1).max(720).default(24).description('会话缓存有效期（小时）').volatile(),
+  cacheTtlHours: z.number().min(1).max(720).default(24).description('会话缓存有效期（小时）；只影响元数据复用，文件按 retainDays 计').volatile(),
+  retainDays: z.number().min(1).max(30).default(7).description('下载目录保留天数（1–30）：超过的内容目录会被清理，并同步失效对应缓存').volatile(),
+  workspaceFilterMode: z.union([z.const('allow'), z.const('deny')]).default('deny').description('工作区过滤模式：allow=只处理列表内工作区，deny=跳过列表内工作区').volatile(),
+  workspaceList: z.array(z.string()).default([]).description('工作区路径列表（按前缀匹配，例如 /home/me/work）。留空且 deny=全部启用').volatile(),
   weiboCookies: z.string().default('').description('微博 Cookie（可选，形如 SUB=...；留空使用访客态）').volatile(),
+  biliCookies: z.string().default('').description('B站 Cookie（可选，形如 SESSDATA=...；留空为未登录，画质上限 480P）').volatile(),
   xhsCookies: z.string().default('').description('小红书 Cookie（可选；页面要求登录时必需）').volatile(),
   videoMaxHeight: z.number().min(144).max(4320).default(1080).description('视频下载的最大高度（px）').volatile(),
   ffmpegPath: z.string().default('ffmpeg').description('ffmpeg 可执行文件（名称或绝对路径）').volatile(),
@@ -152,7 +167,11 @@ export function readConfig(input: unknown): LinkResolverConfig {
     maxDownloadMb: pick('maxDownloadMb', DEFAULTS.maxDownloadMb),
     maxDurationSec: pick('maxDurationSec', DEFAULTS.maxDurationSec),
     cacheTtlHours: pick('cacheTtlHours', DEFAULTS.cacheTtlHours),
+    retainDays: pick('retainDays', DEFAULTS.retainDays),
+    workspaceFilterMode: pick('workspaceFilterMode', DEFAULTS.workspaceFilterMode),
+    workspaceList: pick('workspaceList', DEFAULTS.workspaceList),
     weiboCookies: pick('weiboCookies', DEFAULTS.weiboCookies),
+    biliCookies: pick('biliCookies', DEFAULTS.biliCookies),
     xhsCookies: pick('xhsCookies', DEFAULTS.xhsCookies),
     videoMaxHeight: pick('videoMaxHeight', DEFAULTS.videoMaxHeight),
     ffmpegPath: pick('ffmpegPath', DEFAULTS.ffmpegPath),
