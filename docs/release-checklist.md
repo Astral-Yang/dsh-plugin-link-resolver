@@ -2,7 +2,7 @@
 
 - 包名：`dsh-plugin-link-resolver`
 - 版本：`1.0.0-rc.19`
-- 日期：2026-11-18
+- 日期：2026-11-18（真机验收通过，同日）
 
 ## 一、代码与构建
 
@@ -31,8 +31,8 @@
 - [x] `--dump-config-schema` 读取到插件 Config
 - [x] 单链路 pre-step：headless 实跑「链接 → 下载 → 交付 → 注入 → completed」
 - [x] 卸载后 bundles / node_modules / 配置条目均清理
-- [ ] 真实 IM 轮次复验（`dsh_im_return_file` 登记 + 渠道上传）
-- [ ] 真实 Web 轮次复验（`present` 文件卡片）
+- [x] 真实 IM 轮次复验（`dsh_im_return_file` 登记 + 微信渠道收到文件）
+- [x] 真实 Web 轮次复验（`present` 文件卡片）
 
 ## 四、许可证与合规
 
@@ -66,7 +66,7 @@
 
 ```bash
 # 使用本地 tarball
-dsh plugin --profile <profile> add /home/astral/workspace/DevLab/link-resolver/dsh-link-resolver/dsh-plugin-link-resolver-1.0.0-rc.16.tgz
+dsh plugin --profile <profile> add /home/astral/workspace/DevLab/link-resolver/dsh-link-resolver/dsh-plugin-link-resolver-1.0.0-rc.19.tgz
 
 # 卸载
 dsh plugin --profile <profile> remove dsh-plugin-link-resolver
