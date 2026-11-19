@@ -69,10 +69,11 @@ jobs:
       - name: Publish to npm
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          case "$VERSION" in
-            *-*) TAG=next ;;
-            *) TAG=latest ;;
-          esac
+          if [[ "$VERSION" == *-* ]]; then
+            echo "::error::只发布正式版本，package.json 版本不能包含预发布后缀：$VERSION"
+            exit 1
+          fi
+          TAG=latest
           echo "version=$VERSION dist-tag=$TAG"
 
           if npm view "dsh-plugin-link-resolver@$VERSION" version >/dev/null 2>&1; then

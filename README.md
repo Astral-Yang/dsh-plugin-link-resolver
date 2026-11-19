@@ -56,11 +56,7 @@ yt-dlp --version
 **方式一：npm**
 
 ```bash
-# 稳定通道（latest）
 dsh plugin --profile <profile> add dsh-plugin-link-resolver
-
-# 预发布通道（next）
-dsh plugin --profile <profile> add dsh-plugin-link-resolver@next
 ```
 
 **方式二：本地 tarball（发布包验收）**
@@ -284,7 +280,7 @@ git push origin v1.0.0-rc.22
 
 流程：checkout → `pnpm install --frozen-lockfile` → 校验 tag 与版本 → build → test → `npm publish`。
 
-- 含 `-` 的预发布版本自动发到 `next` dist-tag，正式版本发到 `latest`；
+- 所有发布都是正式版本，统一发到 `latest`（workflow 会拒绝带预发布后缀的版本号）；
 - 发布带 `--provenance`（需要公开仓库 + `id-token: write`，workflow 已声明）；
 - 首次建议先手动跑一次 dry-run：Actions → publish → Run workflow。
 
