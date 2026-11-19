@@ -35,8 +35,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
           cache: pnpm
+
+      - name: Configure npm auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+            echo "npm auth: token"
+          else
+            echo "npm auth: OIDC trusted publishing（未配置 NPM_TOKEN）"
+          fi
 
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -57,8 +67,6 @@ jobs:
         run: pnpm test
 
       - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           case "$VERSION" in
@@ -66,6 +74,12 @@ jobs:
             *) TAG=latest ;;
           esac
           echo "version=$VERSION dist-tag=$TAG"
+
+          if npm view "dsh-plugin-link-resolver@$VERSION" version >/dev/null 2>&1; then
+            echo "::notice::dsh-plugin-link-resolver@$VERSION 已存在于 npm，跳过发布"
+            exit 0
+          fi
+
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             npm publish --tag "$TAG" --access public --dry-run
           else
