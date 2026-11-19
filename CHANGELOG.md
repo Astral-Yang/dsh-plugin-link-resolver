@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0-rc.23 — 首个由 CI 发布的版本
+
+### 构建与发布
+
+- 本版由 GitHub Actions 的 `publish` workflow 发布到 npm 的 `next` 通道，带 `--provenance` 签名。
+- 验证发布链路：tag 与版本一致性校验、`pnpm install --frozen-lockfile`、build、test、幂等跳过逻辑。
+
+### 文档
+
+- README 安装方式更新为 npm 实际状态（`latest` / `next` 两个通道）。
+- 本地 tarball 示例版本号改为 `<version>` 占位，避免随版本迭代过期。
+
 ## 1.0.0-rc.22 — B站标题取值
 
 ### 修复

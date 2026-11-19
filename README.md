@@ -53,17 +53,21 @@ yt-dlp --version
 三个命令都在 PATH 里即可；装在别处时用配置项 `ffmpegPath` / `ytdlpPath` 指定名称或绝对路径。
 插件只做版本探测与明确报错，**不会自动安装系统依赖**。
 
-**方式一：npm（发布后）**
+**方式一：npm**
 
 ```bash
+# 稳定通道（latest）
 dsh plugin --profile <profile> add dsh-plugin-link-resolver
+
+# 预发布通道（next）
+dsh plugin --profile <profile> add dsh-plugin-link-resolver@next
 ```
 
 **方式二：本地 tarball（发布包验收）**
 
 ```bash
-npm pack                      # 生成 dsh-plugin-link-resolver-1.0.0-rc.19.tgz
-dsh plugin --profile <profile> add /absolute/path/to/dsh-plugin-link-resolver-1.0.0-rc.19.tgz
+npm pack                      # 生成 dsh-plugin-link-resolver-<version>.tgz
+dsh plugin --profile <profile> add /absolute/path/to/dsh-plugin-link-resolver-<version>.tgz
 ```
 
 **方式三：本地源码（开发）**
