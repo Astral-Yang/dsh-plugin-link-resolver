@@ -261,6 +261,31 @@ dsh plugin --profile <profile> remove dsh-plugin-link-resolver
 - **YouTube 解析失败**：确认 `yt-dlp --version` 可用，且版本足够新（建议 2026 最新版）。
 - **下载文件在哪里**：会话工作区的 `downloads/<平台>/<内容 id>/`（见「下载目录」一节）。
 
+## 发布（GitHub Actions）
+
+发布由 `.github/workflows/publish.yml` 完成：推送 `v*` tag 触发，也可以在 Actions 页面手动触发（默认 dry-run，不真正发布）。
+
+### 一次性准备
+
+1. 在 npm → Access Tokens 生成 **Granular Access Token**（Automation 类型，权限 Read and write，包范围 `dsh-plugin-link-resolver`）；
+2. 仓库 Settings → Secrets and variables → Actions → 新建 `NPM_TOKEN`，值为该 token。
+
+### 发布
+
+```bash
+# tag 必须与 package.json 的版本一致，否则 workflow 会直接失败
+git tag -a v1.0.0-rc.22 -m "v1.0.0-rc.22"
+git push origin v1.0.0-rc.22
+```
+
+流程：checkout → `pnpm install --frozen-lockfile` → 校验 tag 与版本 → build → test → `npm publish`。
+
+- 含 `-` 的预发布版本自动发到 `next` dist-tag，正式版本发到 `latest`；
+- 发布带 `--provenance`（需要公开仓库 + `id-token: write`，workflow 已声明）；
+- 首次建议先手动跑一次 dry-run：Actions → publish → Run workflow。
+
+> 想改用 npm 的 Trusted Publishing（OIDC，不存 token）：在 npm 包设置里把 trusted publisher 绑定到本仓库的 `publish.yml`，然后删掉 workflow 里的 `NODE_AUTH_TOKEN` 即可。
+
 ## 开发
 
 ```bash

@@ -7,6 +7,11 @@
 - 单 P 视频的 `pages[0].part` 常被平台写成时间戳等无意义值，之前标题优先取 `part`，导致标题变成一串数字（实测 `BV1R3sU6xE3J` → `1794985173419`）。
 - 改为**视频标题优先**；只有多 P 视频才附带分 P 名：`标题（P2：分P名）`。新增 `pickVideoTitle()` 与回归用例。
 
+### 构建与发布
+
+- 新增 `.github/workflows/publish.yml`：推送 `v*` tag 自动构建、测试并发布到 npm；预发布版本走 `next` dist-tag，支持手动 dry-run。
+- `package.json` 补 `repository` / `homepage` / `bugs` / `packageManager` / `publishConfig`，满足 TASK.md §10.1 的发布字段要求。
+
 ### 验证
 
 - 单测 50/50。
