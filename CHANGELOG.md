@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.3
+
+### 修复
+
+- **链接提取**：Markdown 形态的链接（`[文字](目标)`，KOOK 等渠道会把消息里的链接渲染成这种形式）此前会把 `](https://…` 一起吞进 URL，导致小红书短链（如 `xhslink.cn/o/…`）提取不到笔记 id 并报 `unsupported-url`。现在提取前先把 Markdown 链接折平为裸目标，URL 字符集排除方括号，残缺 Markdown（缺右括号）也能兜住。
+- `normalizeUrl` 不再给 `ftp:` / `file:` 等非 http(s) 链接强行补 `https://`。
+
+### 测试
+
+- 新增 `test/url.test.js`（Markdown 包裹、中英文标点、多链接去重、scheme 校验共 6 条），单测 59/59。
+
 ## 1.0.2
 
 ### 变更
