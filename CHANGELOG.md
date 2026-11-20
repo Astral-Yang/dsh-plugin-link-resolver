@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.4
+
+### 新增
+
+- **`audioOnly` / `audioOnlyPlatforms`**：视频下载后在同目录另存一份 `.mp3`（LAME 192 kbps），原视频保留、交付内容不变（仍然只发视频）；平台白名单留空表示全部启用平台，需要 `ffmpeg`。
+
+### 修复
+
+- 设置卡片：`audioOnly` / `audioOnlyPlatforms` 补上 Schema 声明——此前只在界面与默认值里存在，Host 校验视为未知字段，保存会报「保存失败：audioOnly、audioOnlyPlatforms」。
+- 设置卡片：保存失败时逐个列出被拒绝的字段名；数字字段先按 Schema 的 min/max 本地校验，超范围直接提示、不再发送请求。
+
+### 测试
+
+- 单测 66/66；新增 `Config({})` 字段集合与 `DEFAULTS` 的一致性测试，防止 Schema 漏声明再次静默发生。
+
 ## 1.0.3
 
 ### 修复
