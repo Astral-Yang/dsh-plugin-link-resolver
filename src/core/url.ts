@@ -7,8 +7,11 @@
  * @module dsh-plugin-link-resolver/core/url
  */
 
-/** 从任意文本中抽取 http(s) 链接（按出现顺序，保序去重）。 */
-const URL_IN_TEXT = /https?:\/\/[^\s'"<>]+/giu;
+/** 从任意文本中抽取 http(s) 链接（按出现顺序，保序去重）。方括号留给 Markdown 语法。 */
+const URL_IN_TEXT = /https?:\/\/[^\s'"<>\[\]]+/giu;
+
+/** Markdown 链接：`[文字](目标)`，目标可带尖括号。 */
+const MARKDOWN_LINK = /\[[^\]]*\]\(\s*<?(https?:\/\/[^)\s>]+)>?\s*\)/giu;
 
 /** 链接末尾常见的包裹标点，应从候选中剔除。 */
 const TRAILING_PUNCTUATION = /[)\]}>，。！？；：、"''）】]+$/u;
@@ -22,6 +25,8 @@ const TRAILING_PUNCTUATION = /[)\]}>，。！？；：、"''）】]+$/u;
 export function normalizeUrl(raw: string): string {
   const trimmed = raw.trim().replace(TRAILING_PUNCTUATION, '');
   if (trimmed.length === 0) return '';
+  // 已带其它 scheme（ftp:、file: 等）时不再补 https://
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !/^https?:/i.test(trimmed)) return '';
   const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
     const parsed = new URL(withScheme);
@@ -39,8 +44,11 @@ export function normalizeUrl(raw: string): string {
  * @returns 规范化后的链接列表。
  */
 export function extractLinks(text: string): string[] {
+  // Markdown 链接先折平成裸链接：`[文字](目标)` 只保留目标，
+  // 否则 `](https://…` 会连成一段被当成同一个 URL。
+  const flattened = text.replace(MARKDOWN_LINK, (_match, target: string) => ` ${target} `);
   const found: string[] = [];
-  for (const match of text.matchAll(URL_IN_TEXT)) {
+  for (const match of flattened.matchAll(URL_IN_TEXT)) {
     const normalized = normalizeUrl(match[0]);
     if (normalized.length > 0 && !found.includes(normalized)) found.push(normalized);
   }
