@@ -102,6 +102,25 @@ test('failureText：带原因码并要求不重试', () => {
   assert.match(text, /不要调用 resolve_link 重试/);
 });
 
+test('successText：未注册工具时文案不再指向 resolve_link', () => {
+  const text = successText({
+    result: sampleResult(),
+    delivery: { ok: true, channel: 'present', delivered: 1 },
+    origin: 'local',
+    fileCount: 1,
+    fileRefs: [],
+    toolEnabled: false,
+  });
+  assert.match(text, /不要再解析或读取下载目录/);
+  assert.doesNotMatch(text, /resolve_link/);
+});
+
+test('failureText：未注册工具时不提示调用 resolve_link 重试', () => {
+  const text = failureText('小红书', 'download-failed', '下载超时', [], false);
+  assert.match(text, /直接说明原因并给出可行建议/);
+  assert.doesNotMatch(text, /resolve_link/);
+});
+
 test('notice：source 为 link-resolver / notice', () => {
   const message = notice('正文', '链接已处理');
   assert.equal(message.role, 'user');

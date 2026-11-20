@@ -90,6 +90,8 @@ export interface SuccessInput {
   skipped?: string[];
   /** 下载阶段的警告（例如部分媒体失败）。 */
   note?: string;
+  /** 是否注册了 `resolve_link` 工具；未注册时文案不再指向该工具。 */
+  toolEnabled?: boolean;
 }
 
 /**
@@ -119,11 +121,15 @@ export function successText(input: SuccessInput): string {
   if (input.skipped && input.skipped.length > 0) {
     lines.push(`另有 ${input.skipped.length} 条受支持链接本轮未处理：${input.skipped.join('、')}`);
   }
+  const noRedo =
+    input.toolEnabled === false
+      ? '不要再解析或读取下载目录'
+      : '不要再调用 resolve_link，也不要读取下载目录';
   const tail =
     input.fileCount === 0
-      ? '信息已完整：不要再调用 resolve_link，也不要读取下载目录；直接输出 1–3 句介绍。'
+      ? `信息已完整：${noRedo}；直接输出 1–3 句介绍。`
       : delivery?.ok === true
-        ? '信息已完整：不要再调用 resolve_link，也不要读取下载目录；直接输出 1–3 句介绍。'
+        ? `信息已完整：${noRedo}；直接输出 1–3 句介绍。`
         : input.origin === 'im'
           ? '本轮无法通过 IM 投递：不要声称已经发送文件，直接说明原因（例如请稍后重新发送链接）。'
           : '本轮没有可用的文件交付通道：不要声称已经发送文件；如需交付，可调用一次 present（files 用上面的相对路径）。';
@@ -140,11 +146,19 @@ export function successText(input: SuccessInput): string {
  * @param skipped - 本轮未处理的其他链接。
  * @returns 注入正文。
  */
-export function failureText(platform: string, code: string, message: string, skipped: string[] = []): string {
+export function failureText(
+  platform: string,
+  code: string,
+  message: string,
+  skipped: string[] = [],
+  toolEnabled = true,
+): string {
   const lines = [
     `[link-resolver] 本轮自动处理失败：${platform} · code=${code}`,
     `原因：${message}`,
-    '没有可交付的文件。不要调用 resolve_link 重试；直接说明原因并给出可行建议（例如稍后重新发送链接）。',
+    toolEnabled
+      ? '没有可交付的文件。不要调用 resolve_link 重试；直接说明原因并给出可行建议（例如稍后重新发送链接）。'
+      : '没有可交付的文件。直接说明原因并给出可行建议（例如稍后重新发送链接）。',
   ];
   if (skipped.length > 0) lines.push(`另有 ${skipped.length} 条受支持链接本轮未处理：${skipped.join('、')}`);
   return lines.join('\n');

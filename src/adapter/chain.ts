@@ -177,7 +177,7 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         ctx.logger.info(`link-resolver: 命中会话缓存 ${url}（${cached.downloads.length} 个文件）`);
         const delivery = await deliverFiles(ctx, exec, cached.downloads, formatSummary(cached, cached.downloads));
         const refs = cached.downloads.map((file) => relative(workspace, file.path));
-        const body = successText({ result: cached, delivery, origin, fileCount: cached.downloads.length, fileRefs: refs, reused: true, skipped });
+        const body = successText({ result: cached, delivery, origin, fileCount: cached.downloads.length, fileRefs: refs, reused: true, skipped, toolEnabled: config.toolEnabled });
         return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
       }
 
@@ -191,7 +191,7 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
             cache.set(sessionId, url, result);
             const delivery = await deliverFiles(ctx, exec, refilled, formatSummary(result, refilled));
             const refs = refilled.map((file) => relative(workspace, file.path));
-            const body = successText({ result, delivery, origin, fileCount: refilled.length, fileRefs: refs, skipped });
+            const body = successText({ result, delivery, origin, fileCount: refilled.length, fileRefs: refs, skipped, toolEnabled: config.toolEnabled });
             return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
           }
         } catch (error) {
@@ -204,7 +204,7 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         const code = outcome.error?.code ?? 'unknown';
         const message = outcome.error?.message ?? '未知错误';
         ctx.logger.warn(`link-resolver: 处理失败 ${url} code=${code} message=${message}`);
-        return { kind: 'enter' as const, messages: [...base, notice(failureText(label, code, message, skipped), '链接处理失败')] };
+        return { kind: 'enter' as const, messages: [...base, notice(failureText(label, code, message, skipped, config.toolEnabled), '链接处理失败')] };
       }
 
       const result = outcome.result;
@@ -213,7 +213,7 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
 
       if (outcome.files.length === 0) {
         ctx.logger.info(`link-resolver: 无可交付媒体 ${url}${note ? `（${note}）` : ''}`);
-        const body = successText({ result, origin, fileCount: 0, fileRefs: [], ...(note ? { note } : {}), ...(skipped.length > 0 ? { skipped } : {}) });
+        const body = successText({ result, origin, fileCount: 0, fileRefs: [], ...(note ? { note } : {}), ...(skipped.length > 0 ? { skipped } : {}), toolEnabled: config.toolEnabled });
         return { kind: 'enter' as const, messages: [...base, notice(body, '链接已处理')] };
       }
 
@@ -230,12 +230,13 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         fileRefs: refs,
         ...(note ? { note } : {}),
         ...(skipped.length > 0 ? { skipped } : {}),
+        toolEnabled: config.toolEnabled,
       });
       return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       ctx.logger.warn(`link-resolver: 自动处理异常 ${url} ${message}`);
-      return { kind: 'enter' as const, messages: [...base, notice(failureText(label, 'internal', message, skipped), '链接处理失败')] };
+      return { kind: 'enter' as const, messages: [...base, notice(failureText(label, 'internal', message, skipped, config.toolEnabled), '链接处理失败')] };
     }
   };
 
