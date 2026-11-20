@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import plugin, { Config, apply, inject, name } from '../lib/index.js';
+import { DEFAULTS } from '../lib/adapter/config.js';
 
 /** 默认配置（用 Schema 自身补默认值，确保与运行时一致）。 */
 function defaults() {
@@ -58,6 +59,10 @@ test('插件导出 shape 符合 Cordis 约定', () => {
   assert.equal(typeof Config, 'function');
   assert.equal(plugin.name, name);
   assert.equal(plugin.apply, apply);
+});
+
+test('Schema 字段与 DEFAULTS 保持一致（防止漏声明）', () => {
+  assert.deepEqual(Object.keys(Config({})).sort(), Object.keys(DEFAULTS).sort());
 });
 
 test('不再向系统提示注入静态引导', () => {

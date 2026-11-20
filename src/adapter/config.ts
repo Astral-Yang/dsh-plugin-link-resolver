@@ -100,6 +100,16 @@ export const Config = z.object({
     .default(['bilibili', 'douyin', 'xiaohongshu', 'weibo', 'twitter', 'youtube'])
     .description('启用的平台')
     .volatile(),
+  audioOnly: z
+    .boolean()
+    .default(false)
+    .description('视频下载后另存一份 mp3（不改变交付内容）；需要 ffmpeg')
+    .volatile(),
+  audioOnlyPlatforms: z
+    .array(z.string())
+    .default([])
+    .description('转音频的平台白名单（留空=全部启用平台）')
+    .volatile(),
   resolveTimeoutMs: z.number().min(1000).max(120000).default(20000).description('单次解析超时（毫秒）').volatile(),
   downloadTimeoutMs: z.number().min(1000).max(1800000).default(300000).description('单次下载总超时（毫秒）').volatile(),
   retryCount: z.number().min(0).max(10).default(2).description('解析失败重试次数（不含模型侧重试）').volatile(),
