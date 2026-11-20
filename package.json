@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-link-resolver",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DeepSeek Harness plugin: resolve, download and deliver Bilibili, Douyin, Xiaohongshu, Weibo, X and YouTube links in one step — to Web file cards or an IM conversation — while the model only narrates the result.",
   "license": "AGPL-3.0-only",
   "repository": {

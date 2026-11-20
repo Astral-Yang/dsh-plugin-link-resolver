@@ -21,9 +21,11 @@ function defaults() {
 function fakeContext() {
   const registered = [];
   const effects = [];
+  const injected = [];
   return {
     registered,
     effects,
+    injected,
     ctx: {
       logger: { info() {}, warn() {}, error() {}, debug() {} },
       effect(fn) {
@@ -33,8 +35,8 @@ function fakeContext() {
           if (typeof dispose === 'function') dispose();
         };
       },
-      inject() {
-        // systemPrompt 在 headless 下可能缺失；此处模拟"缺失"分支。
+      inject(services) {
+        injected.push(services);
       },
       on() {
         return () => {};
@@ -56,6 +58,12 @@ test('插件导出 shape 符合 Cordis 约定', () => {
   assert.equal(typeof Config, 'function');
   assert.equal(plugin.name, name);
   assert.equal(plugin.apply, apply);
+});
+
+test('不再向系统提示注入静态引导', () => {
+  const { ctx, injected } = fakeContext();
+  apply(ctx, defaults());
+  assert.deepEqual(injected.filter((services) => services.includes('systemPrompt')), []);
 });
 
 test('总开关关闭时不注册工具', () => {

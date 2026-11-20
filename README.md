@@ -86,7 +86,6 @@ dsh plugin --profile <profile> add link:/absolute/path/to/dsh-link-resolver
 | `enabled` | `true` | 插件总开关 |
 | `downloadMedia` | `true` | 自动链路是否下载媒体；关闭时只解析元数据，不下载、不交付 |
 | `toolEnabled` | `false` | 是否向模型注册 `resolve_link` 工具；默认关闭，链接由插件自动处理 |
-| `autoGuidance` | `true` | 系统提示引导：上下文已有结果时直接采用、不要重复解析 |
 | `enabledPlatforms` | 六平台（不含 generic） | 平台白名单 |
 | `resolveTimeoutMs` | `20000` | 单次解析超时（毫秒） |
 | `downloadTimeoutMs` | `300000` | 单次下载总超时（毫秒） |

@@ -19,7 +19,6 @@ export interface LinkResolverConfig {
   toolEnabled: boolean;
   /** 自动链路是否下载媒体；关闭时只注入元数据。 */
   downloadMedia: boolean;
-  autoGuidance: boolean;
   enabledPlatforms: string[];
   resolveTimeoutMs: number;
   downloadTimeoutMs: number;
@@ -51,7 +50,6 @@ export const DEFAULTS: LinkResolverConfig = {
   enabled: true,
   toolEnabled: false,
   downloadMedia: true,
-  autoGuidance: true,
   enabledPlatforms: ['bilibili', 'douyin', 'xiaohongshu', 'weibo', 'twitter', 'youtube'],
   resolveTimeoutMs: 20000,
   downloadTimeoutMs: 300000,
@@ -91,7 +89,6 @@ export const Config = z.object({
     .default(true)
     .description('自动链路是否下载媒体；关闭时只解析元数据并注入结果，不下载、不交付')
     .volatile(),
-  autoGuidance: z.boolean().default(true).description('向系统提示注入「上下文已有结果时直接采用」的引导').volatile(),
   enabledPlatforms: z
     .array(z.union(PLATFORM_IDS.map((id) => z.const(id))))
     .default(['bilibili', 'douyin', 'xiaohongshu', 'weibo', 'twitter', 'youtube'])
@@ -156,7 +153,6 @@ export function readConfig(input: unknown): LinkResolverConfig {
     enabled: pick('enabled', DEFAULTS.enabled),
     toolEnabled: pick('toolEnabled', DEFAULTS.toolEnabled),
     downloadMedia: pick('downloadMedia', DEFAULTS.downloadMedia),
-    autoGuidance: pick('autoGuidance', DEFAULTS.autoGuidance),
     enabledPlatforms: pick('enabledPlatforms', DEFAULTS.enabledPlatforms),
     resolveTimeoutMs: pick('resolveTimeoutMs', DEFAULTS.resolveTimeoutMs),
     downloadTimeoutMs: pick('downloadTimeoutMs', DEFAULTS.downloadTimeoutMs),

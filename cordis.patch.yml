@@ -9,7 +9,6 @@
       config:
         enabled: true
         downloadMedia: true
-        autoGuidance: true
         # 通用站点默认关闭：需要显式把 "generic" 加入列表才会启用。
         enabledPlatforms:
           - bilibili

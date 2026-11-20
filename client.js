@@ -13,7 +13,6 @@ window.__ModuleLoader__.load({
     const FIELDS = [
       { key: 'downloadMedia', type: 'boolean', label: '下载媒体', hint: '开：解析后下载并在对话/IM 内自动交付；关：只解析元数据，不下载、不交付' },
       { key: 'toolEnabled', type: 'boolean', label: '注册 resolve_link 工具', hint: '默认关闭：链接由插件自动处理，模型无需重复解析；需要手动解析时才打开' },
-      { key: 'autoGuidance', type: 'boolean', label: '系统提示引导', hint: '向系统提示注入「上下文已有结果时直接采用，不要重复解析」' },
       { key: 'retainDays', type: 'number', label: '下载保留天数 (1–30)', hint: '超过该天数的内容目录会被清理，并同步失效对应缓存' },
       {
         key: 'workspaceFilterMode',

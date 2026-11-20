@@ -25,13 +25,6 @@ export const name = 'link-resolver';
 /** 仅在 `tools` 服务就绪时启动；其余服务按需可选注入。 */
 export const inject = ['tools'];
 
-/** 系统提示段：上下文里已有结果时直接采用。 */
-const GUIDANCE = [
-  '当用户消息中出现 B站、抖音、小红书、微博、X 或 YouTube 链接时，插件会先行解析并在上下文注入 [link-resolver] 结果。',
-  '看到该结果就直接采用作答：不要再次解析、不要读取下载目录，也不要凭链接文字猜测内容。',
-  '若上下文中没有该结果（插件未启用、工作区被过滤或平台不支持），按普通消息如实回答，不要编造或猜测链接内容。',
-].join('');
-
 /**
  * 插件入口。
  *
@@ -70,20 +63,6 @@ export function apply(ctx: Context, rawConfig: unknown): void {
     }
   });
 
-  if (config.autoGuidance) {
-    // systemPrompt 为可选服务：headless / SDK 组合下可能不存在，缺失时静默跳过。
-    ctx.inject(['systemPrompt'], (scope) => {
-      scope.effect(
-        () =>
-          scope.systemPrompt.section({
-            name: 'link-resolver:guidance',
-            order: 40,
-            text: GUIDANCE,
-          }),
-        'link-resolver: guidance section',
-      );
-    });
-  }
 
   ctx.logger.info(
     `link-resolver: 已启用（平台=${config.enabledPlatforms.join('/') || '无'}，工具=${config.toolEnabled ? '开' : '关'}，下载=${config.downloadMedia ? '开' : '关'}）`,
