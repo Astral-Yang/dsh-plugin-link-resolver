@@ -12,10 +12,10 @@ window.__ModuleLoader__.load({
 
     const FIELDS = [
       { key: 'downloadMedia', type: 'boolean', label: '下载媒体', hint: '开：解析后下载并在对话/IM 内自动交付；关：只解析元数据，不下载、不交付' },
-      { key: 'audioOnly', type: 'boolean', label: '视频自动转音频', hint: '视频下载后转为 m4a 并只交付音频；需要 ffmpeg' },
+      { key: 'audioOnly', type: 'boolean', label: '视频自动转音频', hint: '视频下载后另存一份 mp3，交付内容不变；需要 ffmpeg' },
       { key: 'audioOnlyPlatforms', type: 'list', label: '转音频平台', hint: '留空=全部启用平台；可选 bilibili, douyin, xiaohongshu, weibo, twitter, youtube, generic' },
       { key: 'toolEnabled', type: 'boolean', label: '注册 resolve_link 工具', hint: '默认关闭：链接由插件自动处理，模型无需重复解析；需要手动解析时才打开' },
-      { key: 'retainDays', type: 'number', label: '下载保留天数 (1–30)', hint: '超过该天数的内容目录会被清理，并同步失效对应缓存' },
+      { key: 'retainDays', type: 'number', min: 1, max: 30, label: '下载保留天数 (1–30)', hint: '超过该天数的内容目录会被清理，并同步失效对应缓存' },
       {
         key: 'workspaceFilterMode',
         type: 'select',
@@ -28,12 +28,12 @@ window.__ModuleLoader__.load({
       },
       { key: 'workspaceList', type: 'list', label: '工作区路径', hint: '英文逗号分隔，按前缀匹配，例如 /home/me/work, /data/projects' },
       { key: 'downloadDir', type: 'string', label: '下载目录', hint: '相对会话工作区；绝对路径可直接使用' },
-      { key: 'videoMaxHeight', type: 'number', label: '视频最大高度 (px)' },
-      { key: 'maxMedia', type: 'number', label: '最大媒体数量' },
-      { key: 'maxDownloadMb', type: 'number', label: '下载大小上限 (MB)' },
-      { key: 'maxConcurrent', type: 'number', label: '最大并发数' },
-      { key: 'resolveTimeoutMs', type: 'number', label: '解析超时 (ms)' },
-      { key: 'downloadTimeoutMs', type: 'number', label: '下载超时 (ms)' },
+      { key: 'videoMaxHeight', type: 'number', min: 144, max: 4320, label: '视频最大高度 (px)' },
+      { key: 'maxMedia', type: 'number', min: 1, max: 200, label: '最大媒体数量' },
+      { key: 'maxDownloadMb', type: 'number', min: 0, max: 2000, label: '下载大小上限 (MB)' },
+      { key: 'maxConcurrent', type: 'number', min: 1, max: 8, label: '最大并发数' },
+      { key: 'resolveTimeoutMs', type: 'number', min: 1000, max: 120000, label: '解析超时 (ms)' },
+      { key: 'downloadTimeoutMs', type: 'number', min: 1000, max: 1800000, label: '下载超时 (ms)' },
       { key: 'ffmpegPath', type: 'string', label: 'ffmpeg 路径' },
       { key: 'ytdlpPath', type: 'string', label: 'yt-dlp 路径' },
       { key: 'enabledPlatforms', type: 'list', label: '启用平台', hint: '英文逗号分隔：bilibili, douyin, xiaohongshu, weibo, twitter, youtube' },
@@ -106,6 +106,8 @@ window.__ModuleLoader__.load({
       return h('input', {
         style: styles.input,
         type: field.type === 'number' ? 'number' : 'text',
+        ...(field.type === 'number' && field.min !== undefined ? { min: field.min } : {}),
+        ...(field.type === 'number' && field.max !== undefined ? { max: field.max } : {}),
         value: shown,
         disabled,
         onChange: (event) =>
@@ -142,10 +144,28 @@ window.__ModuleLoader__.load({
           const changed = Object.keys(draft).filter((key) => JSON.stringify(draft[key]) !== JSON.stringify(base[key]));
           if (changed.length === 0) {
             setStatus('没有修改');
-          } else {
-            const results = await Promise.all(changed.map((key) => form.set(key, draft[key])));
-            setStatus(results.every(Boolean) ? '已保存，立即生效' : '部分字段保存失败');
+            return;
           }
+          const invalid = changed.filter((key) => {
+            const field = FIELDS.find((entry) => entry.key === key);
+            if (!field || field.type !== 'number') return false;
+            const value = draft[key];
+            return (
+              typeof value !== 'number' ||
+              !Number.isFinite(value) ||
+              (field.min !== undefined && value < field.min) ||
+              (field.max !== undefined && value > field.max)
+            );
+          });
+          if (invalid.length > 0) {
+            setStatus(`取值超出范围，未保存：${invalid.join('、')}`);
+            return;
+          }
+          const results = await Promise.all(
+            changed.map(async (key) => ({ key, ok: await form.set(key, draft[key]) })),
+          );
+          const failed = results.filter((entry) => !entry.ok).map((entry) => entry.key);
+          setStatus(failed.length > 0 ? `保存失败：${failed.join('、')}（其余字段已生效）` : '已保存，立即生效');
         } catch (error) {
           setStatus(`保存失败：${String(error)}`);
         } finally {
