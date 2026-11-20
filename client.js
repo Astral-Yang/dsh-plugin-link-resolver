@@ -12,6 +12,8 @@ window.__ModuleLoader__.load({
 
     const FIELDS = [
       { key: 'downloadMedia', type: 'boolean', label: '下载媒体', hint: '开：解析后下载并在对话/IM 内自动交付；关：只解析元数据，不下载、不交付' },
+      { key: 'audioOnly', type: 'boolean', label: '视频自动转音频', hint: '视频下载后转为 m4a 并只交付音频；需要 ffmpeg' },
+      { key: 'audioOnlyPlatforms', type: 'list', label: '转音频平台', hint: '留空=全部启用平台；可选 bilibili, douyin, xiaohongshu, weibo, twitter, youtube, generic' },
       { key: 'toolEnabled', type: 'boolean', label: '注册 resolve_link 工具', hint: '默认关闭：链接由插件自动处理，模型无需重复解析；需要手动解析时才打开' },
       { key: 'retainDays', type: 'number', label: '下载保留天数 (1–30)', hint: '超过该天数的内容目录会被清理，并同步失效对应缓存' },
       {

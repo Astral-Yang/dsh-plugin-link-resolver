@@ -37,7 +37,7 @@ export interface LocalFile {
   path: string;
   bytes: number;
   mimeType?: string;
-  kind: 'video' | 'image';
+  kind: 'video' | 'image' | 'audio';
 }
 
 /** 内容形态。 */

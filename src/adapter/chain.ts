@@ -23,6 +23,7 @@ import { extractLinks } from '../core/url.js';
 import type { LinkResolverConfig } from './config.js';
 import { failureText, notice, successText } from './notice.js';
 import { deliverFiles, downloadMedia, formatSummary, processLink } from './pipeline.js';
+import { deliverableFiles } from '../media/audio.js';
 import { maybeCleanup, workspaceAllowed } from './retention.js';
 
 /** dsh-im 随每个入站 IM 消息注入的通知 source kind（旧形态：独立消息）。 */
@@ -175,9 +176,10 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
       const cached = cache.get(sessionId, url);
       if (cached?.downloads?.length && (await allFilesExist(cached.downloads))) {
         ctx.logger.info(`link-resolver: 命中会话缓存 ${url}（${cached.downloads.length} 个文件）`);
-        const delivery = await deliverFiles(ctx, exec, cached.downloads, formatSummary(cached, cached.downloads));
-        const refs = cached.downloads.map((file) => relative(workspace, file.path));
-        const body = successText({ result: cached, delivery, origin, fileCount: cached.downloads.length, fileRefs: refs, reused: true, skipped, toolEnabled: config.toolEnabled });
+        const toDeliver = deliverableFiles(cached.downloads, config.audioOnly, config.audioOnlyPlatforms, cached.platform);
+        const delivery = await deliverFiles(ctx, exec, toDeliver, formatSummary(cached, toDeliver));
+        const refs = toDeliver.map((file) => relative(workspace, file.path));
+        const body = successText({ result: cached, delivery, origin, fileCount: toDeliver.length, fileRefs: refs, reused: true, skipped, toolEnabled: config.toolEnabled });
         return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
       }
 
@@ -189,9 +191,10 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
           if (refilled.length > 0) {
             const result = { ...cached, downloads: refilled };
             cache.set(sessionId, url, result);
-            const delivery = await deliverFiles(ctx, exec, refilled, formatSummary(result, refilled));
-            const refs = refilled.map((file) => relative(workspace, file.path));
-            const body = successText({ result, delivery, origin, fileCount: refilled.length, fileRefs: refs, skipped, toolEnabled: config.toolEnabled });
+            const toDeliver = deliverableFiles(refilled, config.audioOnly, config.audioOnlyPlatforms, result.platform);
+            const delivery = await deliverFiles(ctx, exec, toDeliver, formatSummary(result, toDeliver));
+            const refs = toDeliver.map((file) => relative(workspace, file.path));
+            const body = successText({ result, delivery, origin, fileCount: toDeliver.length, fileRefs: refs, skipped, toolEnabled: config.toolEnabled });
             return { kind: 'enter' as const, messages: [...base, notice(body, delivery.ok ? '链接已处理' : '文件未交付')] };
           }
         } catch (error) {
@@ -217,8 +220,9 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         return { kind: 'enter' as const, messages: [...base, notice(body, '链接已处理')] };
       }
 
-      const delivery = await deliverFiles(ctx, exec, outcome.files, formatSummary(result, outcome.files));
-      const refs = outcome.files.map((file) => relative(workspace, file.path));
+      const toDeliver = deliverableFiles(outcome.files, config.audioOnly, config.audioOnlyPlatforms, result.platform);
+      const delivery = await deliverFiles(ctx, exec, toDeliver, formatSummary(result, toDeliver));
+      const refs = toDeliver.map((file) => relative(workspace, file.path));
       ctx.logger.info(
         `link-resolver: 处理完成 ${url} files=${outcome.files.length} origin=${origin} delivery=${delivery.ok ? delivery.channel : `failed(${delivery.code})`}`,
       );
@@ -226,7 +230,7 @@ export function installChain(ctx: Context, getConfig: () => LinkResolverConfig, 
         result,
         delivery,
         origin,
-        fileCount: outcome.files.length,
+        fileCount: toDeliver.length,
         fileRefs: refs,
         ...(note ? { note } : {}),
         ...(skipped.length > 0 ? { skipped } : {}),

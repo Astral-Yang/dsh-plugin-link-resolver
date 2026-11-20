@@ -73,6 +73,7 @@ export function describeResult(result: ResolvedLink): string {
   }
   if (images > 0) media.push(`${images} 张图片`);
   parts.push(media.length > 0 ? media.join(' / ') : '无媒体（纯文本）');
+  if (result.downloads?.some((file) => file.kind === 'audio')) parts.push('另存音频（mp3，不随本轮交付）');
   return parts.join(' · ');
 }
 

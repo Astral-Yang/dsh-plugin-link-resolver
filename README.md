@@ -85,6 +85,8 @@ dsh plugin --profile <profile> add link:/absolute/path/to/dsh-link-resolver
 | --- | --- | --- |
 | `enabled` | `true` | 插件总开关 |
 | `downloadMedia` | `true` | 自动链路是否下载媒体；关闭时只解析元数据，不下载、不交付 |
+| `audioOnly` | `false` | 视频下载后另存一份 mp3（不改变交付内容）；需 `ffmpeg` |
+| `audioOnlyPlatforms` | `[]` | 转音频的平台白名单，留空=全部启用平台 |
 | `toolEnabled` | `false` | 是否向模型注册 `resolve_link` 工具；默认关闭，链接由插件自动处理 |
 | `enabledPlatforms` | 六平台（不含 generic） | 平台白名单 |
 | `resolveTimeoutMs` | `20000` | 单次解析超时（毫秒） |
@@ -215,6 +217,16 @@ IM 渠道的文件投递**必须与 `@xmanrui/dsh-im` 插件配合使用**。未
 **completed 是前提**：dsh-im 把 `turn_end.reason = blocked` 映射为 `TURN_BLOCKED` 并跳过上传。本插件因此永不 `reject`，IM 轮次始终以 completed 结束。
 
 - **文字**：IM 侧可用 `ctx.dshIm.send()` 或 dsh-im 的回答同步（仅文本）。
+
+### 音频模式
+
+`audioOnly: true` 时，下载完成的视频会在同目录另存一份 `.mp3`（LAME 192 kbps），**交付内容不变，仍然只发视频**——音频留在下载目录备用。
+
+- 平台范围由 `audioOnlyPlatforms` 控制，留空表示全部启用平台；
+- 依赖 `ffmpeg`：B站先按 DASH 合并再抽取，其他平台直接抽取单轨；
+- 转换失败不影响视频交付，只在注入提示里注明原因；
+- 音频跟视频一起受 `retainDays` 保留策略管理；
+- 仍然是**先下载视频再转码**，流量按视频计算。
 
 ## 外部依赖
 

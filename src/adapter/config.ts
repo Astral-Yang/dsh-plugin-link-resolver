@@ -19,6 +19,10 @@ export interface LinkResolverConfig {
   toolEnabled: boolean;
   /** 自动链路是否下载媒体；关闭时只注入元数据。 */
   downloadMedia: boolean;
+  /** 是否把下载到的视频转为音频（m4a）。 */
+  audioOnly: boolean;
+  /** 转音频的平台白名单；空数组表示全部平台。 */
+  audioOnlyPlatforms: string[];
   enabledPlatforms: string[];
   resolveTimeoutMs: number;
   downloadTimeoutMs: number;
@@ -50,6 +54,8 @@ export const DEFAULTS: LinkResolverConfig = {
   enabled: true,
   toolEnabled: false,
   downloadMedia: true,
+  audioOnly: false,
+  audioOnlyPlatforms: [],
   enabledPlatforms: ['bilibili', 'douyin', 'xiaohongshu', 'weibo', 'twitter', 'youtube'],
   resolveTimeoutMs: 20000,
   downloadTimeoutMs: 300000,
@@ -153,6 +159,8 @@ export function readConfig(input: unknown): LinkResolverConfig {
     enabled: pick('enabled', DEFAULTS.enabled),
     toolEnabled: pick('toolEnabled', DEFAULTS.toolEnabled),
     downloadMedia: pick('downloadMedia', DEFAULTS.downloadMedia),
+    audioOnly: pick('audioOnly', DEFAULTS.audioOnly),
+    audioOnlyPlatforms: pick('audioOnlyPlatforms', DEFAULTS.audioOnlyPlatforms),
     enabledPlatforms: pick('enabledPlatforms', DEFAULTS.enabledPlatforms),
     resolveTimeoutMs: pick('resolveTimeoutMs', DEFAULTS.resolveTimeoutMs),
     downloadTimeoutMs: pick('downloadTimeoutMs', DEFAULTS.downloadTimeoutMs),

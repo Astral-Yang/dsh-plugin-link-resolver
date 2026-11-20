@@ -6,13 +6,15 @@
  * @module dsh-plugin-link-resolver/adapter/pipeline
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 
 import type { Context } from '@deepseek-ai/cordis';
 import type { ToolCallId } from '@deepseek-ai/dsh-llm';
 
+import { audioTarget, deliverableFiles, wantsAudio } from '../media/audio.js';
 import { downloadFile } from '../media/download.js';
+import { extractAudio } from '../media/ffmpeg.js';
 import { detectPlatform, PLATFORM_BY_ID } from '../core/registry.js';
 import { toErrorPayload } from '../core/result.js';
 import type { ResolvedLink } from '../core/result.js';
@@ -159,6 +161,33 @@ export async function downloadMedia(
       ),
     );
     files.sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  // 音频策略：按平台把视频轨转成 m4a，只交付音频（保留原视频仅在转换失败时）。
+  if (files.length > 0 && wantsAudio(config.audioOnly, config.audioOnlyPlatforms, result.platform)) {
+    const converted: typeof files = [];
+    for (const file of files) {
+      if (file.kind !== 'video') {
+        converted.push(file);
+        continue;
+      }
+      const target = audioTarget(file.path);
+      try {
+        await extractAudio(file.path, target, {
+          executable: config.ffmpegPath,
+          timeoutMs: config.downloadTimeoutMs,
+          ...(signal ? { signal } : {}),
+        });
+        const info = await stat(target);
+        // 原视频照常交付；音频只落盘，交付阶段会被 deliverableFiles 排除。
+        converted.push(file);
+        converted.push({ path: target, bytes: info.size, kind: 'audio', mimeType: 'audio/mpeg' });
+      } catch (error) {
+        result.warnings.push(`转音频失败：${error instanceof Error ? error.message : String(error)}（已保留视频）`);
+        converted.push(file);
+      }
+    }
+    files = converted;
   }
 
   if (result.cover) {
@@ -408,7 +437,8 @@ export async function processLink(
 
     let delivery: DeliverOutcome | undefined;
     if ((options.deliver ?? true) && files.length > 0) {
-      delivery = await deliverFiles(ctx, exec, files, formatSummary(result, files));
+      const toDeliver = deliverableFiles(files, config.audioOnly, config.audioOnlyPlatforms, result.platform);
+      delivery = await deliverFiles(ctx, exec, toDeliver, formatSummary(result, toDeliver));
       result.warnings.push(
         delivery.ok
           ? `已自动通过 ${delivery.channel ?? 'unknown'} 交付 ${delivery.delivered} 个文件${delivery.message ? `（${delivery.message}）` : ''}`

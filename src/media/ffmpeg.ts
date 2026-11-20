@@ -38,9 +38,37 @@ export interface MergeOptions {
  * @param options - 执行参数。
  */
 export async function mergeAv(videoPath: string, audioPath: string, outputPath: string, options: MergeOptions = {}): Promise<void> {
-  const executable = options.executable ?? 'ffmpeg';
-  const timeoutMs = options.timeoutMs ?? 300_000;
   const args = ['-y', '-i', videoPath, '-i', audioPath, '-c', 'copy', '-map', '0:v:0', '-map', '1:a:0', outputPath];
+  await runFfmpeg(options.executable ?? 'ffmpeg', args, outputPath, options);
+}
+
+/**
+ * 从视频里抽音频（转 MP3）。
+ *
+ * @param inputPath - 输入视频。
+ * @param outputPath - 输出音频。
+ * @param options - 执行参数（可加码率）。
+ */
+export async function extractAudio(
+  inputPath: string,
+  outputPath: string,
+  options: MergeOptions & { bitrateKbps?: number } = {},
+): Promise<void> {
+  const bitrate = options.bitrateKbps ?? 192;
+  const args = ['-y', '-i', inputPath, '-vn', '-c:a', 'libmp3lame', '-b:a', `${bitrate}k`, outputPath];
+  await runFfmpeg(options.executable ?? 'ffmpeg', args, outputPath, options);
+}
+
+/**
+ * 运行一次 ffmpeg，失败或超时时清理输出文件。
+ *
+ * @param executable - ffmpeg 可执行文件。
+ * @param args - 参数数组。
+ * @param outputPath - 预期输出（失败时删除）。
+ * @param options - 执行参数。
+ */
+async function runFfmpeg(executable: string, args: string[], outputPath: string, options: MergeOptions): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? 300_000;
 
   await new Promise<void>((resolve, reject) => {
     const child = spawn(executable, args, { stdio: ['ignore', 'ignore', 'pipe'] });
