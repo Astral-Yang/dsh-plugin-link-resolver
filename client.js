@@ -25,7 +25,7 @@ window.__ModuleLoader__.load({
           { value: 'allow', label: '只处理列表内（白名单）' },
         ],
       },
-      { key: 'workspaceList', type: 'list', label: '工作区路径', hint: '逗号分隔，按前缀匹配，例如 /home/me/work,/data/projects' },
+      { key: 'workspaceList', type: 'list', label: '工作区路径', hint: '英文逗号分隔，按前缀匹配，例如 /home/me/work, /data/projects' },
       { key: 'downloadDir', type: 'string', label: '下载目录', hint: '相对会话工作区；绝对路径可直接使用' },
       { key: 'videoMaxHeight', type: 'number', label: '视频最大高度 (px)' },
       { key: 'maxMedia', type: 'number', label: '最大媒体数量' },
@@ -35,7 +35,7 @@ window.__ModuleLoader__.load({
       { key: 'downloadTimeoutMs', type: 'number', label: '下载超时 (ms)' },
       { key: 'ffmpegPath', type: 'string', label: 'ffmpeg 路径' },
       { key: 'ytdlpPath', type: 'string', label: 'yt-dlp 路径' },
-      { key: 'enabledPlatforms', type: 'list', label: '启用平台', hint: '逗号分隔：bilibili,douyin,xiaohongshu,weibo,twitter,youtube' },
+      { key: 'enabledPlatforms', type: 'list', label: '启用平台', hint: '英文逗号分隔：bilibili, douyin, xiaohongshu, weibo, twitter, youtube' },
       { key: 'biliCookies', type: 'string', label: 'B站 Cookie（可选）', hint: '形如 SESSDATA=...；留空为未登录，画质上限 480P' },
       { key: 'weiboCookies', type: 'string', label: '微博 Cookie（可选）' },
       { key: 'xhsCookies', type: 'string', label: '小红书 Cookie（可选）' },
@@ -54,6 +54,37 @@ window.__ModuleLoader__.load({
       status: { fontSize: '12px', opacity: 0.7 },
     };
 
+    /** 列表文本 → 数组（英文逗号分隔）。 */
+    function parseList(text) {
+      return text.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+
+    /**
+     * list 字段输入框。
+     *
+     * 受控输入如果每次按键都用数组 join 回填，末尾的逗号会被 filter 掉，
+     * 导致根本无法输入第二个元素；这里保留原始文本，只把解析结果向上传。
+     */
+    function ListInput(props) {
+      const { value, disabled, onChange } = props;
+      const format = (list) => (Array.isArray(list) ? list.join(', ') : '');
+      const [text, setText] = React.useState(() => format(value));
+      React.useEffect(() => {
+        setText((prev) => (parseList(prev).join('\u0000') === parseList(format(value)).join('\u0000') ? prev : format(value)));
+      }, [value]);
+      return h('input', {
+        style: styles.input,
+        type: 'text',
+        value: text,
+        disabled,
+        onChange: (event) => {
+          const next = event.target.value;
+          setText(next);
+          onChange(parseList(next));
+        },
+      });
+    }
+
     /** 一个字段的编辑控件。 */
     function Field(props) {
       const { field, value, disabled, onChange } = props;
@@ -67,7 +98,10 @@ window.__ModuleLoader__.load({
       if (field.type === 'boolean') {
         return h('input', { type: 'checkbox', checked: Boolean(value), disabled, onChange: (event) => onChange(event.target.checked) });
       }
-      const shown = field.type === 'list' ? (Array.isArray(value) ? value.join(',') : '') : (value ?? '');
+      if (field.type === 'list') {
+        return h(ListInput, { value, disabled, onChange });
+      }
+      const shown = value ?? '';
       return h('input', {
         style: styles.input,
         type: field.type === 'number' ? 'number' : 'text',
@@ -75,11 +109,7 @@ window.__ModuleLoader__.load({
         disabled,
         onChange: (event) =>
           onChange(
-            field.type === 'number'
-              ? Number(event.target.value)
-              : field.type === 'list'
-                ? event.target.value.split(',').map((item) => item.trim()).filter(Boolean)
-                : event.target.value,
+            field.type === 'number' ? Number(event.target.value) : event.target.value,
           ),
       });
     }
